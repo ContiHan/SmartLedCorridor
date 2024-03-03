@@ -9,7 +9,6 @@
 const char* wifiSSID = "Cono'lin_RD";
 const char* wifiPassword = "KldPo.2023";
 
-unsigned long previousMillis = 0;
 unsigned long interval = 1000;
 
 const bool on = LOW;
@@ -24,26 +23,27 @@ void zpravaHlavni() {
   String cas = String(millis() / 1000);
   String zprava = "<!DOCTYPE html>"
                   "<html lang=\"cs\">"
-                  "<head>"
-                  "<meta charset=\"UTF-8\">"
-                  "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-                  "<title>Arduino Server</title>"
-                  "<style>"
-                  "body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; }"
-                  "h1 { color: #333366; }"
-                  "p { color: #666666; }"
-                  "a { background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; display: inline-block; }"
-                  "a:hover { background-color: #45a049; }"
-                  "</style>"
-                  "</head>"
-                  "<body>"
-                  "<h1>Ahoj Arduino světe!</h1>"
-                  "<p>Analogový pin A0: " + analog + "</p>"
-                  "<p>Čas od spuštění Arduina je " + cas + " vteřin.</p>"
-                  "<p>Interval blikání LED: " + String(interval) + "ms</p>"
-                  "<p><a href=\"/blink250ms\">Blikej po 250ms</a></p>"
-                  "<p><a href=\"/blink2000ms\">Blikej po 2000ms</a></p>"
-                  "</body>"
+                    "<head>"
+                      "<meta charset=\"UTF-8\">"
+                      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+                      "<title>Smart LED Corridor</title>"
+                      "<link rel=\"icon\" href=\"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://dev.to&size=16\" type=\"image/x-icon\">"
+                      "<style>"
+                        "body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; }"
+                        "h1 { color: #333366; }"
+                        "p { color: #666666; }"
+                        "a { background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; display: inline-block; }"
+                        "a:hover { background-color: #45a049; }"
+                      "</style>"
+                    "</head>"
+                    "<body>"
+                      "<h1>Ahoj Arduino světe!</h1>"
+                      "<p>Analogový pin A0: " + analog + "</p>"
+                      "<p>Čas od spuštění Arduina je " + cas + " vteřin.</p>"
+                      "<p>Interval blikání LED: "+ String(interval) + "ms</p>"
+                      "<p><a href=\"/blink250ms\">Blikej po 250ms</a></p>"
+                      "<p><a href=\"/blink2000ms\">Blikej po 2000ms</a></p>"
+                    "</body>"
                   "</html>";
 
   server.send(200, "text/html", zprava);
@@ -139,20 +139,33 @@ void setup() {
   Serial.println("/");
 }
 
+void toggleLED() {
+  if (digitalRead(LEDka) == off) {
+    digitalWrite(LEDka, on);
+  } else {
+    digitalWrite(LEDka, off);
+  }
+}
+
+void printTick() {
+  Serial.println("tick..");
+}
+
+void callActionWithDelay(void (*action)(), unsigned long delayTime, unsigned long* previousMillis) {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - *previousMillis >= delayTime) {
+    *previousMillis = currentMillis;
+    action();  // Zavolej akci
+  }
+}
+
 void loop() {
-  // pravidelné volání detekce klienta,
-  // v případě otevření stránky se provedou
-  // funkce nastavené výše
   server.handleClient();
   MDNS.update();
 
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-    if (digitalRead(LEDka) == off) {
-      digitalWrite(LEDka, on);
-    } else {
-      digitalWrite(LEDka, off);
-    }
-  }
+  static unsigned long previousMillisForLED = 0;
+  static unsigned long previousMillisForTick = 0;
+  callActionWithDelay(toggleLED, interval, &previousMillisForLED);
+  callActionWithDelay(printTick, 5000, &previousMillisForTick);
 }
