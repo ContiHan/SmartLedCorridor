@@ -3,8 +3,8 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 
-const char* wifiSSID = "Cono'lin_RD";
-const char* wifiPassword = "KldPo.2023";
+const char* wifiSSID = "zadejSSID";
+const char* wifiPassword = "zadejHeslo";
 
 unsigned long blinkInterval = 1000;
 
